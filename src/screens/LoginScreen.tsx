@@ -74,6 +74,10 @@ export function LoginScreen() {
           Authenticate
         </button>
       </form>
+
+      <div className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink-4">
+        Silver Platter · V{__APP_VERSION__}
+      </div>
     </div>
   );
 }

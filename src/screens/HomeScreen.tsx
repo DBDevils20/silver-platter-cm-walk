@@ -82,6 +82,10 @@ export function HomeScreen() {
           })}
         </div>
       </div>
+
+      <div className="mt-8 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink-4">
+        Silver Platter · V{__APP_VERSION__}
+      </div>
     </div>
   );
 }
