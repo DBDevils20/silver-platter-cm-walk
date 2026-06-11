@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dev-dist/
+*.local
+
+# Confidential site documents — never commit (public repo)
+public/docs/
