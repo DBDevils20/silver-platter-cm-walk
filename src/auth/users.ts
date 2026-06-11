@@ -10,7 +10,10 @@ export const APP_USERS: AppUser[] = [
   { username: 'Alex Boyd', password: '1234' },
   { username: 'Judah Sheck', password: '1234' },
   { username: 'Jerrad Hillis', password: '1234' },
-  { username: 'Ken Cox', password: '1234' }
+  { username: 'Ken Cox', password: '1234' },
+  { username: 'Jerrad Atkins', password: '1234' },
+  { username: 'Allan Garcia', password: '1234' },
+  { username: 'Greg Moore', password: '1234' }
 ];
 
 export function authenticate(username: string, password: string): AppUser | null {
