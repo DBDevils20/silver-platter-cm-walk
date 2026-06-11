@@ -1,0 +1,10 @@
+name = "silver-platter-sync"
+main = "src/worker.js"
+compatibility_date = "2026-06-01"
+
+[[kv_namespaces]]
+binding = "WALKS"
+id = "e4a8bcf73fb84d958ed237e618bfe910"
+
+[vars]
+SYNC_KEY = "SP-SYNC-1234"
