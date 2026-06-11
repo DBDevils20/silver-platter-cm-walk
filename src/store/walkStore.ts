@@ -10,7 +10,7 @@ import type {
   TelcoUtility,
   WalkOutcome
 } from '../types';
-import { dbGetAllWalks, dbPutWalk } from '../db/indexeddb';
+import { dbDeleteWalk, dbGetAllWalks, dbPutWalk } from '../db/indexeddb';
 import { createMeasurements, createSections, createUtilities } from '../utils/checklistData';
 
 export function uid(): string {
@@ -132,6 +132,10 @@ function buildSeedWalk(): SiteWalk {
   return walk;
 }
 
+// Pre-deterministic-id walk records (test data only), superseded by the
+// prov-*/seed-* copies. Purged from devices on load; the backend rejects them.
+const RETIRED_WALK_IDS = new Set(['fn8g8sq8mq900835', 'vrlxo7zcmq900838', 'b5uoc005mq8xp456']);
+
 // Real sites provisioned from project documentation (RFDS / coverage strategy /
 // E911 records on Egnyte). Created on any device that doesn't have them yet.
 const PROVISIONED_WALKS: { setup: WalkSetupInput; apply: (walk: SiteWalk) => void }[] = [
@@ -225,6 +229,10 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
   load: async () => {
     if (get().loaded) return;
     let walks = await dbGetAllWalks();
+    for (const retired of walks.filter((w) => RETIRED_WALK_IDS.has(w.id))) {
+      await dbDeleteWalk(retired.id);
+    }
+    walks = walks.filter((w) => !RETIRED_WALK_IDS.has(w.id));
     if (walks.length === 0 && !localStorage.getItem('sp-seeded')) {
       const seed = buildSeedWalk();
       seed.id = 'seed-TMO-FL-0047'; // deterministic so devices don't duplicate it via sync
@@ -257,6 +265,7 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
   closeWalk: () => set({ activeWalkId: null }),
 
   upsertWalkFromSync: (walk) => {
+    if (RETIRED_WALK_IDS.has(walk.id)) return;
     set((s) => {
       const exists = s.walks.some((w) => w.id === walk.id);
       return { walks: exists ? s.walks.map((w) => (w.id === walk.id ? walk : w)) : [...s.walks, walk] };

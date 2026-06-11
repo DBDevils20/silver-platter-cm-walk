@@ -11,6 +11,10 @@
  * key metadata so listing never has to read full values.
  */
 
+// Pre-deterministic-id records, replaced by prov-*/seed-* equivalents.
+// Rejected on write and hidden on read so stale devices can't resurrect them.
+const RETIRED_IDS = new Set(['fn8g8sq8mq900835', 'vrlxo7zcmq900838', 'b5uoc005mq8xp456']);
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
@@ -53,7 +57,7 @@ export default {
         const page = await env.WALKS.list({ prefix: 'walks/', cursor });
         for (const key of page.keys) {
           const meta = key.metadata ?? {};
-          if (meta.id) {
+          if (meta.id && !RETIRED_IDS.has(meta.id)) {
             out.push({ id: meta.id, siteId: meta.siteId ?? '', status: meta.status ?? '', lastModified: meta.lastModified ?? '' });
           }
         }
@@ -63,6 +67,7 @@ export default {
     }
 
     if (request.method === 'GET' && idMatch) {
+      if (RETIRED_IDS.has(decodeURIComponent(idMatch[1]))) return json(410, { error: 'walk retired' });
       const value = await env.WALKS.get(`walks/${decodeURIComponent(idMatch[1])}`);
       if (value === null) return json(404, { error: 'walk not found' });
       return new Response(value, { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } });
@@ -70,6 +75,7 @@ export default {
 
     if (request.method === 'PUT' && idMatch) {
       const id = decodeURIComponent(idMatch[1]);
+      if (RETIRED_IDS.has(id)) return json(200, { stored: false, reason: 'walk retired' });
       let walk;
       try {
         walk = await request.json();
