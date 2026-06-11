@@ -7,6 +7,25 @@ export type SyncStatus = 'off' | 'idle' | 'syncing' | 'error';
 const URL_KEY = 'sp-sync-url';
 const SECRET_KEY = 'sp-sync-key';
 
+// Built-in backend: sync works out of the box with no user setup.
+// The panel on Home can still override these (e.g. to point at a test server).
+const DEFAULT_SYNC_URL = 'https://silver-platter-sync.rkc-silver-platter.workers.dev';
+const DEFAULT_SYNC_KEY = 'SP-SYNC-1234';
+
+function initialUrl(): string {
+  const stored = localStorage.getItem(URL_KEY);
+  // Adopt the built-in backend if nothing is configured, or if the device
+  // still points at a retired temporary tunnel.
+  if (!stored || stored.includes('trycloudflare.com') || stored.includes('localhost')) {
+    return DEFAULT_SYNC_URL;
+  }
+  return stored;
+}
+
+function initialKey(): string {
+  return localStorage.getItem(SECRET_KEY) || DEFAULT_SYNC_KEY;
+}
+
 interface RemoteWalkSummary {
   id: string;
   siteId: string;
@@ -41,9 +60,9 @@ async function api<T>(base: string, key: string, path: string, init?: RequestIni
 }
 
 export const useSyncStore = create<SyncState>((set, get) => ({
-  serverUrl: localStorage.getItem(URL_KEY) ?? '',
-  syncKey: localStorage.getItem(SECRET_KEY) ?? '',
-  status: localStorage.getItem(URL_KEY) ? 'idle' : 'off',
+  serverUrl: initialUrl(),
+  syncKey: initialKey(),
+  status: 'idle',
   lastSyncAt: null,
   lastError: '',
 
