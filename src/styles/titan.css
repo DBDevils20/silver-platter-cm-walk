@@ -46,6 +46,8 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+  /* Keep content clear of the phone status bar in standalone/PWA mode. */
+  padding-top: env(safe-area-inset-top);
 }
 
 h1,

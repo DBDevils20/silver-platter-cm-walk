@@ -33,7 +33,7 @@ export function PhotoStrip({ photos, onUpdate, onDelete }: PhotoStripProps) {
       </div>
 
       {openPhoto && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-void">
+        <div className="fixed inset-0 z-50 flex flex-col bg-void" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="eyebrow">Photo · Detail</span>
             <button type="button" className="btn btn-ghost !p-1" onClick={() => setOpenId(null)}>

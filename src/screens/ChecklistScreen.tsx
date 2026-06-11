@@ -21,7 +21,10 @@ export function ChecklistScreen() {
 
   return (
     <div className="mx-auto max-w-lg pb-24">
-      <div className="sticky top-0 z-30 border-b border-line bg-deck px-4 pb-3 pt-4">
+      <div
+        className="sticky top-0 z-30 border-b border-line bg-deck px-4 pb-3"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)', marginTop: 'calc(env(safe-area-inset-top) * -1)' }}
+      >
         <div className="flex items-center justify-between">
           <span className="font-mono text-[13px] font-semibold text-brass">{walk.siteId}</span>
           <span className="font-mono text-[12px] text-ink-2 tnum">{pct}% COMPLETE</span>
