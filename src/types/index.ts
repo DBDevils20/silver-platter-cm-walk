@@ -81,6 +81,11 @@ export interface PhotoEntry {
   sectionLabel: string;
   itemId?: string | null;
   capturedAt: string;
+  /** Coordinates at capture time; null when no fix was available. */
+  gpsLat?: number | null;
+  gpsLng?: number | null;
+  /** 'device' = live GPS fix, 'site' = fell back to the walk's site coords. */
+  gpsSource?: 'device' | 'site' | null;
 }
 
 export type RiskSeverity = 'low' | 'medium' | 'high';

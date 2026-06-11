@@ -302,7 +302,11 @@ export async function exportWalkPdf(walk: SiteWalk): Promise<void> {
       doc.setFont('courier', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...MUTE);
-      const captionText = `${photo.category} · ${photo.caption || 'UNCAPTIONED'}`;
+      const stampParts = [new Date(photo.capturedAt).toLocaleString()];
+      if (photo.gpsLat != null && photo.gpsLng != null) {
+        stampParts.push(`${photo.gpsLat.toFixed(5)}, ${photo.gpsLng.toFixed(5)}${photo.gpsSource === 'site' ? ' (site)' : ''}`);
+      }
+      const captionText = `${photo.category} · ${photo.caption || 'UNCAPTIONED'}\n${stampParts.join(' · ')}`;
       doc.text(doc.splitTextToSize(captionText, cellW), x, py + imgH + 10);
       col += 1;
       if (col === 3) {

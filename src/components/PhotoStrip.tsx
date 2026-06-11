@@ -49,6 +49,11 @@ export function PhotoStrip({ photos, onUpdate, onDelete }: PhotoStripProps) {
           </div>
           <div className="space-y-3 border-t border-line p-4">
             {openPhoto.sectionLabel && <div className="eyebrow">{openPhoto.sectionLabel}</div>}
+            <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4 tnum">
+              {new Date(openPhoto.capturedAt).toLocaleString()}
+              {openPhoto.gpsLat != null && openPhoto.gpsLng != null &&
+                ` · ${openPhoto.gpsLat.toFixed(5)}, ${openPhoto.gpsLng.toFixed(5)}${openPhoto.gpsSource === 'site' ? ' · Site Coords' : ''}`}
+            </div>
             <div>
               <label className="field-label">Caption</label>
               <input
