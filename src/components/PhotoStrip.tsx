@@ -5,9 +5,11 @@ interface PhotoStripProps {
   photos: PhotoEntry[];
   onUpdate: (id: string, patch: Partial<PhotoEntry>) => void;
   onDelete: (id: string) => void;
+  /** Layout of the thumbnail row; default suits checklist rows. */
+  stripClassName?: string;
 }
 
-export function PhotoStrip({ photos, onUpdate, onDelete }: PhotoStripProps) {
+export function PhotoStrip({ photos, onUpdate, onDelete, stripClassName }: PhotoStripProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const openPhoto = photos.find((p) => p.id === openId) ?? null;
 
@@ -15,7 +17,7 @@ export function PhotoStrip({ photos, onUpdate, onDelete }: PhotoStripProps) {
 
   return (
     <>
-      <div className="flex gap-2 overflow-x-auto px-3 pb-2 pl-10">
+      <div className={stripClassName ?? 'flex gap-2 overflow-x-auto px-3 pb-2 pl-10'}>
         {photos.map((photo) => (
           <button
             key={photo.id}

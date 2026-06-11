@@ -1,12 +1,32 @@
 import type { ReactNode } from 'react';
 import { useActiveWalk, useWalkStore, uid } from '../store/walkStore';
 import { Field } from '../components/Field';
+import { MeasureInput } from '../components/MeasureInput';
+import { PhotoCapture } from '../components/PhotoCapture';
+import { PhotoStrip } from '../components/PhotoStrip';
+import type { PhotoCategory } from '../types';
 
-function MeasurePanel({ title, accent = 'brass', children }: { title: string; accent?: 'brass' | 'info'; children: ReactNode }) {
+function MeasurePanel({
+  title,
+  accent = 'brass',
+  evidence,
+  strip,
+  children
+}: {
+  title: string;
+  accent?: 'brass' | 'info';
+  evidence?: ReactNode;
+  strip?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <div className={`panel ${accent === 'brass' ? 'accent-left-brass' : 'accent-left-info'} space-y-3 p-4`}>
-      <div className="eyebrow">{title}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="eyebrow">{title}</div>
+        {evidence}
+      </div>
       {children}
+      {strip}
     </div>
   );
 }
@@ -14,6 +34,9 @@ function MeasurePanel({ title, accent = 'brass', children }: { title: string; ac
 export function MeasurementsScreen() {
   const walk = useActiveWalk();
   const updateMeasurements = useWalkStore((s) => s.updateMeasurements);
+  const addPhoto = useWalkStore((s) => s.addPhoto);
+  const updatePhoto = useWalkStore((s) => s.updatePhoto);
+  const deletePhoto = useWalkStore((s) => s.deletePhoto);
 
   if (!walk) return null;
   const m = walk.measurements;
@@ -28,26 +51,63 @@ export function MeasurementsScreen() {
     });
   }
 
+  /** Evidence capture button + thumbnail strip for one measurement group. */
+  function groupEvidence(groupId: string, groupTitle: string, category: PhotoCategory) {
+    const photos = walk!.photos.filter((p) => p.itemId === groupId);
+    return {
+      evidence: (
+        <PhotoCapture
+          category={category}
+          sectionLabel={`MEASUREMENTS · ${groupTitle.toUpperCase()}`}
+          itemId={groupId}
+          defaultCaption={`${groupTitle} measurement`}
+          onCapture={addPhoto}
+          className={`item-action ${photos.length > 0 ? 'has-content' : ''}`}
+        >
+          Photo{photos.length > 0 ? ` · ${photos.length}` : ''}
+        </PhotoCapture>
+      ),
+      strip:
+        photos.length > 0 ? (
+          <PhotoStrip
+            photos={photos}
+            onUpdate={updatePhoto}
+            onDelete={deletePhoto}
+            stripClassName="flex gap-2 overflow-x-auto"
+          />
+        ) : undefined
+    };
+  }
+
+  const compound = groupEvidence('meas-compound', 'Compound', 'COMPOUND');
+  const easement = groupEvidence('meas-easement', 'Easement Runs', 'ACCESS');
+  const power = groupEvidence('meas-power', 'Power Runs', 'POWER');
+  const telco = groupEvidence('meas-telco', 'Telco Runs', 'TELCO');
+  const tower = groupEvidence('meas-tower', 'Tower & RF', 'TOWER');
+
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-6">
       <div className="eyebrow mb-2">Phase 2 · Measurements</div>
       <h1>
         <em className="accent">Field</em> Measurements
       </h1>
+      <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">
+        Measure with your phone's Measure app · Copy · Paste — units auto-convert
+      </div>
 
       <div className="mt-5 space-y-4">
-        <MeasurePanel title="Compound">
+        <MeasurePanel title="Compound" evidence={compound.evidence} strip={compound.strip}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Length (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.compoundLength} onChange={(e) => updateMeasurements({ compoundLength: e.target.value })} />
+              <MeasureInput value={m.compoundLength} onChange={(v) => updateMeasurements({ compoundLength: v })} />
             </Field>
             <Field label="Width (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.compoundWidth} onChange={(e) => updateMeasurements({ compoundWidth: e.target.value })} />
+              <MeasureInput value={m.compoundWidth} onChange={(v) => updateMeasurements({ compoundWidth: v })} />
             </Field>
           </div>
         </MeasurePanel>
 
-        <MeasurePanel title="Easement Runs">
+        <MeasurePanel title="Easement Runs" evidence={easement.evidence} strip={easement.strip}>
           {m.easementRuns.length === 0 && (
             <div className="font-mono text-[12px] italic text-ink-3">No runs recorded.</div>
           )}
@@ -65,13 +125,11 @@ export function MeasurementsScreen() {
                 />
               </Field>
               <Field label="Length (ft)">
-                <input
-                  className="input tnum"
-                  inputMode="decimal"
+                <MeasureInput
                   value={run.lengthFt}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     updateMeasurements({
-                      easementRuns: m.easementRuns.map((r) => (r.id === run.id ? { ...r, lengthFt: e.target.value } : r))
+                      easementRuns: m.easementRuns.map((r) => (r.id === run.id ? { ...r, lengthFt: v } : r))
                     })
                   }
                 />
@@ -85,46 +143,46 @@ export function MeasurementsScreen() {
           )}
         </MeasurePanel>
 
-        <MeasurePanel title="Power Runs">
+        <MeasurePanel title="Power Runs" evidence={power.evidence} strip={power.strip}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="MMP→Meter (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.powerMmpToMeter} onChange={(e) => updateMeasurements({ powerMmpToMeter: e.target.value })} />
+              <MeasureInput value={m.powerMmpToMeter} onChange={(v) => updateMeasurements({ powerMmpToMeter: v })} />
             </Field>
             <Field label="Meter→Cabinets (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.powerMeterToCabinets} onChange={(e) => updateMeasurements({ powerMeterToCabinets: e.target.value })} />
+              <MeasureInput value={m.powerMeterToCabinets} onChange={(v) => updateMeasurements({ powerMeterToCabinets: v })} />
             </Field>
           </div>
           <div className="flex items-center justify-between border-t border-line-cold pt-3">
             <span className="eyebrow">Total Run</span>
-            <span className="font-mono text-[15px] font-semibold text-ink-1 tnum">{powerTotal} FT</span>
+            <span className="font-mono text-[15px] font-semibold text-ink-1 tnum">{Math.round(powerTotal * 100) / 100} FT</span>
           </div>
           {wireReview && <span className="chip chip-warn">A&amp;E Wire Size Review Required</span>}
         </MeasurePanel>
 
-        <MeasurePanel title="Telco Runs" accent="info">
+        <MeasurePanel title="Telco Runs" accent="info" evidence={telco.evidence} strip={telco.strip}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Telco MMP→D-Mark (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.telcoMmpToDmark} onChange={(e) => updateMeasurements({ telcoMmpToDmark: e.target.value })} />
+              <MeasureInput value={m.telcoMmpToDmark} onChange={(v) => updateMeasurements({ telcoMmpToDmark: v })} />
             </Field>
             <Field label="D-Mark→Cabinets (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.telcoDmarkToCabinets} onChange={(e) => updateMeasurements({ telcoDmarkToCabinets: e.target.value })} />
+              <MeasureInput value={m.telcoDmarkToCabinets} onChange={(v) => updateMeasurements({ telcoDmarkToCabinets: v })} />
             </Field>
           </div>
         </MeasurePanel>
 
-        <MeasurePanel title="Tower &amp; RF">
+        <MeasurePanel title="Tower &amp; RF" evidence={tower.evidence} strip={tower.strip}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tower Height (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.towerHeight} onChange={(e) => updateMeasurements({ towerHeight: e.target.value })} />
+              <MeasureInput value={m.towerHeight} onChange={(v) => updateMeasurements({ towerHeight: v })} />
             </Field>
             <Field label="Proposed NSD (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.nsdHeight} onChange={(e) => updateMeasurements({ nsdHeight: e.target.value })} />
+              <MeasureInput value={m.nsdHeight} onChange={(v) => updateMeasurements({ nsdHeight: v })} />
             </Field>
             <Field label="Crane Pad L (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.cranePadLength} onChange={(e) => updateMeasurements({ cranePadLength: e.target.value })} />
+              <MeasureInput value={m.cranePadLength} onChange={(v) => updateMeasurements({ cranePadLength: v })} />
             </Field>
             <Field label="Crane Pad W (ft)">
-              <input className="input tnum" inputMode="decimal" value={m.cranePadWidth} onChange={(e) => updateMeasurements({ cranePadWidth: e.target.value })} />
+              <MeasureInput value={m.cranePadWidth} onChange={(v) => updateMeasurements({ cranePadWidth: v })} />
             </Field>
           </div>
         </MeasurePanel>
