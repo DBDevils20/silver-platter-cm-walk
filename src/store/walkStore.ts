@@ -21,6 +21,13 @@ function nowISO(): string {
   return new Date().toISOString();
 }
 
+// Notifies the sync layer after local mutations. Registered at startup
+// (callback indirection avoids a circular import with the sync store).
+let onWalkMutated: (() => void) | null = null;
+export function setOnWalkMutated(fn: () => void): void {
+  onWalkMutated = fn;
+}
+
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -189,6 +196,7 @@ interface WalkStoreState {
   createWalk: (setup: WalkSetupInput) => SiteWalk;
   openWalk: (id: string) => void;
   closeWalk: () => void;
+  upsertWalkFromSync: (walk: SiteWalk) => void;
   mutateActive: (fn: (walk: SiteWalk) => void) => void;
   setItemState: (sectionId: string, itemId: string, state: ItemState) => void;
   setItemNotes: (sectionId: string, itemId: string, notes: string) => void;
@@ -219,6 +227,7 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
     let walks = await dbGetAllWalks();
     if (walks.length === 0 && !localStorage.getItem('sp-seeded')) {
       const seed = buildSeedWalk();
+      seed.id = 'seed-TMO-FL-0047'; // deterministic so devices don't duplicate it via sync
       await dbPutWalk(seed);
       localStorage.setItem('sp-seeded', '1');
       walks = [seed];
@@ -226,6 +235,7 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
     for (const prov of PROVISIONED_WALKS) {
       if (!walks.some((w) => w.siteId === prov.setup.siteId)) {
         const walk = buildWalk(prov.setup);
+        walk.id = `prov-${prov.setup.siteId}`; // deterministic so devices don't duplicate it via sync
         prov.apply(walk);
         await dbPutWalk(walk);
         walks.push(walk);
@@ -239,11 +249,20 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
     const walk = buildWalk(setup);
     set((s) => ({ walks: [walk, ...s.walks], activeWalkId: walk.id }));
     void dbPutWalk(walk);
+    onWalkMutated?.();
     return walk;
   },
 
   openWalk: (id) => set({ activeWalkId: id }),
   closeWalk: () => set({ activeWalkId: null }),
+
+  upsertWalkFromSync: (walk) => {
+    set((s) => {
+      const exists = s.walks.some((w) => w.id === walk.id);
+      return { walks: exists ? s.walks.map((w) => (w.id === walk.id ? walk : w)) : [...s.walks, walk] };
+    });
+    void dbPutWalk(walk);
+  },
 
   mutateActive: (fn) => {
     const { walks, activeWalkId } = get();
@@ -259,6 +278,7 @@ export const useWalkStore = create<WalkStoreState>((set, get) => ({
     }
     set((s) => ({ walks: s.walks.map((w) => (w.id === next.id ? next : w)) }));
     void dbPutWalk(next);
+    onWalkMutated?.();
   },
 
   setItemState: (sectionId, itemId, state) => {

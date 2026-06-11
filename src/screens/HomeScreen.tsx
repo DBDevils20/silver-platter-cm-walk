@@ -3,6 +3,7 @@ import { useWalkStore, walkCompletion } from '../store/walkStore';
 import { useAuthStore } from '../store/authStore';
 import { StatusChip } from '../components/StatusChip';
 import { ProgressBar } from '../components/ProgressBar';
+import { SyncPanel } from '../components/SyncPanel';
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ export function HomeScreen() {
       <button type="button" className="btn btn-primary mt-5 w-full" onClick={() => navigate('/setup')}>
         Initiate Walk
       </button>
+
+      <SyncPanel />
 
       <div className="mt-9">
         <div className="eyebrow mb-3">Saved Walks · {walks.length}</div>

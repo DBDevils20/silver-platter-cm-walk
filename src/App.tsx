@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import { useWalkStore } from './store/walkStore';
+import { setOnWalkMutated, useWalkStore } from './store/walkStore';
 import { useAuthStore } from './store/authStore';
+import { scheduleSync, startSyncLoop } from './store/syncStore';
 import { BottomNav } from './components/BottomNav';
 import { LoginScreen } from './screens/LoginScreen';
 import { HomeScreen } from './screens/HomeScreen';
@@ -29,7 +30,10 @@ export default function App() {
   const currentUser = useAuthStore((s) => s.currentUser);
 
   useEffect(() => {
-    void load();
+    void load().then(() => {
+      setOnWalkMutated(scheduleSync);
+      startSyncLoop();
+    });
   }, [load]);
 
   if (!currentUser) {
